@@ -453,7 +453,7 @@
     }
     .copy-btn:hover { border-color: var(--blue-hi); color: var(--blue-hi); }
 
-    /* Syntax */
+    /* Syntax — shared */
     .kw { color: #ff7b72; }
     .fn { color: #d2a8ff; }
     .cm { color: #8b949e; font-style: italic; }
@@ -461,6 +461,50 @@
     .nm { color: #79c0ff; }
     .op { color: #ff7b72; }
     .pn { color: #e6edf3; }
+    /* Python extras */
+    .py-kw  { color: #ff7b72; }
+    .py-fn  { color: #d2a8ff; }
+    .py-cm  { color: #8b949e; font-style: italic; }
+    .py-st  { color: #a5d6ff; }
+    .py-nm  { color: #79c0ff; }
+    .py-bi  { color: #ffa657; }   /* builtins: True/False/None/print/assert */
+    .py-dec { color: #d2a8ff; }   /* decorators */
+
+    /* Python run panel */
+    .py-run-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #2d333b;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .py-run-btn:hover:not(:disabled) { border-color: var(--green-hi); color: var(--green-hi); }
+    .py-run-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .py-output {
+      margin-top: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 14px 16px;
+      min-height: 42px;
+      white-space: pre-wrap;
+      color: var(--muted);
+      display: none;
+    }
+    .py-output.visible { display: block; }
+    .py-output.ok   { color: var(--green-hi); border-color: rgba(63,185,80,.3); }
+    .py-output.err  { color: var(--red-hi);   border-color: rgba(248,81,73,.3); }
+    .py-output.info { color: var(--muted); }
 
     /* ── Footer ────────────────────────────────── */
     footer {
@@ -652,6 +696,38 @@
         <button class="copy-btn" id="copyBtn" onclick="copyCode()">Copy</button>
         <pre id="srcDisplay"></pre>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Python Implementation ── -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">🐍 Python Implementation</span>
+      <div class="src-meta">
+        <div class="meta-item">
+          <span class="meta-lbl">Runtime</span>
+          <span class="meta-val">Pyodide (WASM)</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl">Language</span>
+          <span class="meta-val">Python 3</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="code-wrap">
+        <button class="copy-btn" id="pyCopyBtn" onclick="copyPyCode()">Copy</button>
+        <pre id="pySrcDisplay"></pre>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <button class="py-run-btn" id="pyRunBtn" onclick="runPython()">
+          ▶ Run Tests
+        </button>
+        <span id="pyStatus" style="font-size:12px;color:var(--muted)">
+          Runs in-browser via Pyodide — first load ~10 MB
+        </span>
+      </div>
+      <div class="py-output" id="pyOutput"></div>
     </div>
   </div>
 
@@ -922,6 +998,174 @@ function sort(width, height, length, mass) {
       btn.textContent = 'Copied!';
       setTimeout(() => btn.textContent = 'Copy', 2000);
     });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Python Implementation — source + Pyodide runner
+  // ═══════════════════════════════════════════════════════════════
+
+  // Note: first test case in the original was (100,100,100,10) → "STANDARD"
+  // which is incorrect — volume = 1,000,000 triggers the bulky threshold → "SPECIAL".
+  // Corrected below.
+  const PY_PLAIN = `def sort(width, height, length, mass):
+    # Constants for better maintainability
+    MAX_DIMENSION = 150
+    MAX_VOLUME = 1000000
+    MAX_MASS = 20
+
+    volume = width * height * length
+
+    # Logic flags
+    is_bulky = (volume >= MAX_VOLUME or
+                width >= MAX_DIMENSION or
+                height >= MAX_DIMENSION or
+                length >= MAX_DIMENSION)
+
+    is_heavy = mass >= MAX_MASS
+
+    # Dispatch logic
+    if is_bulky and is_heavy:
+        return "REJECTED"
+    if is_bulky or is_heavy:
+        return "SPECIAL"
+
+    return "STANDARD"
+
+
+# --- Test Suite ---
+def run_tests():
+    test_cases = [
+        {"input": (100, 100, 100, 10), "expected": "SPECIAL"},   # volume = 1M cm³ → bulky
+        {"input": (150, 10, 10, 10),   "expected": "SPECIAL"},   # edge: exact dimension limit
+        {"input": (10, 10, 10, 20),    "expected": "SPECIAL"},   # edge: exact mass limit
+        {"input": (150, 150, 150, 20), "expected": "REJECTED"},  # both bulky and heavy
+        {"input": (50, 50, 50, 10),    "expected": "STANDARD"},  # neither
+    ]
+
+    for case in test_cases:
+        result = sort(*case["input"])
+        assert result == case["expected"], (
+            f"FAIL sort{case['input']}: expected {case['expected']}, got {result}"
+        )
+        print(f"  PASS  sort{case['input']} → {result}")
+
+    print("\\nAll tests passed!")
+
+
+run_tests()`;
+
+  const PY_HTML = `<span class="py-kw">def</span> <span class="py-fn">sort</span>(width, height, length, mass):
+    <span class="py-cm"># Constants for better maintainability</span>
+    MAX_DIMENSION = <span class="py-nm">150</span>
+    MAX_VOLUME    = <span class="py-nm">1000000</span>
+    MAX_MASS      = <span class="py-nm">20</span>
+
+    volume = width * height * length
+
+    <span class="py-cm"># Logic flags</span>
+    is_bulky = (volume    <span class="py-op">&gt;=</span> MAX_VOLUME
+                <span class="py-kw">or</span> width  <span class="py-op">&gt;=</span> MAX_DIMENSION
+                <span class="py-kw">or</span> height <span class="py-op">&gt;=</span> MAX_DIMENSION
+                <span class="py-kw">or</span> length <span class="py-op">&gt;=</span> MAX_DIMENSION)
+
+    is_heavy = mass <span class="py-op">&gt;=</span> MAX_MASS
+
+    <span class="py-cm"># Dispatch logic</span>
+    <span class="py-kw">if</span> is_bulky <span class="py-kw">and</span> is_heavy:
+        <span class="py-kw">return</span> <span class="py-st">"REJECTED"</span>
+    <span class="py-kw">if</span> is_bulky <span class="py-kw">or</span> is_heavy:
+        <span class="py-kw">return</span> <span class="py-st">"SPECIAL"</span>
+
+    <span class="py-kw">return</span> <span class="py-st">"STANDARD"</span>
+
+
+<span class="py-cm"># --- Test Suite ---</span>
+<span class="py-kw">def</span> <span class="py-fn">run_tests</span>():
+    test_cases = [
+        {<span class="py-st">"input"</span>: (<span class="py-nm">100</span>, <span class="py-nm">100</span>, <span class="py-nm">100</span>, <span class="py-nm">10</span>), <span class="py-st">"expected"</span>: <span class="py-st">"SPECIAL"</span>},   <span class="py-cm"># volume = 1M cm³ → bulky</span>
+        {<span class="py-st">"input"</span>: (<span class="py-nm">150</span>, <span class="py-nm">10</span>,  <span class="py-nm">10</span>,  <span class="py-nm">10</span>), <span class="py-st">"expected"</span>: <span class="py-st">"SPECIAL"</span>},   <span class="py-cm"># edge: exact dimension limit</span>
+        {<span class="py-st">"input"</span>: (<span class="py-nm">10</span>,  <span class="py-nm">10</span>,  <span class="py-nm">10</span>,  <span class="py-nm">20</span>), <span class="py-st">"expected"</span>: <span class="py-st">"SPECIAL"</span>},   <span class="py-cm"># edge: exact mass limit</span>
+        {<span class="py-st">"input"</span>: (<span class="py-nm">150</span>, <span class="py-nm">150</span>, <span class="py-nm">150</span>, <span class="py-nm">20</span>), <span class="py-st">"expected"</span>: <span class="py-st">"REJECTED"</span>},  <span class="py-cm"># both bulky and heavy</span>
+        {<span class="py-st">"input"</span>: (<span class="py-nm">50</span>,  <span class="py-nm">50</span>,  <span class="py-nm">50</span>,  <span class="py-nm">10</span>), <span class="py-st">"expected"</span>: <span class="py-st">"STANDARD"</span>},  <span class="py-cm"># neither</span>
+    ]
+
+    <span class="py-kw">for</span> case <span class="py-kw">in</span> test_cases:
+        result = <span class="py-fn">sort</span>(*case[<span class="py-st">"input"</span>])
+        <span class="py-bi">assert</span> result == case[<span class="py-st">"expected"</span>], (
+            <span class="py-bi">f</span><span class="py-st">"FAIL sort{case['input']}: expected {case['expected']}, got {result}"</span>
+        )
+        <span class="py-bi">print</span>(<span class="py-bi">f</span><span class="py-st">"  PASS  sort{case['input']} → {result}"</span>)
+
+    <span class="py-bi">print</span>(<span class="py-st">"\\nAll tests passed!"</span>)
+
+
+<span class="py-fn">run_tests</span>()`;
+
+  document.getElementById('pySrcDisplay').innerHTML = PY_HTML;
+
+  function copyPyCode() {
+    navigator.clipboard.writeText(PY_PLAIN).then(() => {
+      const btn = document.getElementById('pyCopyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  // ── Pyodide lazy loader ──────────────────────────────────────────
+  let _pyodide = null;
+
+  async function getPyodide() {
+    if (_pyodide) return _pyodide;
+    // Dynamically inject the Pyodide script once
+    if (!document.getElementById('pyodide-script')) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.id  = 'pyodide-script';
+        s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
+        s.onload  = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    _pyodide = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/' });
+    return _pyodide;
+  }
+
+  async function runPython() {
+    const btn    = document.getElementById('pyRunBtn');
+    const status = document.getElementById('pyStatus');
+    const out    = document.getElementById('pyOutput');
+
+    btn.disabled      = true;
+    btn.textContent   = '⏳ Loading…';
+    status.textContent = 'Fetching Pyodide runtime (~10 MB, once)…';
+    out.className      = 'py-output info visible';
+    out.textContent    = 'Loading Python runtime…';
+
+    try {
+      const py = await getPyodide();
+
+      btn.textContent   = '⏳ Running…';
+      status.textContent = '';
+
+      // Redirect stdout so we can capture print() output
+      py.runPython(`
+import sys, io
+sys.stdout = io.StringIO()
+`);
+      py.runPython(PY_PLAIN);
+      const stdout = py.runPython('sys.stdout.getvalue()').trim();
+
+      out.className  = 'py-output ok visible';
+      out.textContent = stdout || '(no output)';
+    } catch (e) {
+      out.className  = 'py-output err visible';
+      out.textContent = e.message || String(e);
+      status.textContent = '';
+    }
+
+    btn.disabled    = false;
+    btn.textContent = '▶ Run Tests';
   }
 
   // ═══════════════════════════════════════════════════════════════
