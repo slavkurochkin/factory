@@ -523,6 +523,7 @@
     <div class="badge">⚙ Robotic Dispatch System</div>
     <h1>Package Router</h1>
     <p class="hdr-sub">Smarter Technologies — Automation Factory</p>
+    <a href="#python-section" style="display:inline-block;margin-top:16px;padding:7px 18px;background:rgba(31,111,235,.15);border:1px solid rgba(88,166,255,.3);color:var(--blue-hi);border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='rgba(31,111,235,.25)'" onmouseout="this.style.background='rgba(31,111,235,.15)'">🐍 Jump to Python Solution ↓</a>
   </div>
 </header>
 
@@ -672,35 +673,8 @@
     <ul class="test-list" id="testList"></ul>
   </div>
 
-  <!-- ── Source Code ── -->
-  <div class="card">
-    <div class="card-hdr">
-      <span class="card-title">{ } Source Code</span>
-      <div class="src-meta">
-        <div class="meta-item">
-          <span class="meta-lbl">Time</span>
-          <span class="meta-val">O(1)</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-lbl">Space</span>
-          <span class="meta-val">O(1)</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-lbl">Language</span>
-          <span class="meta-val">JavaScript</span>
-        </div>
-      </div>
-    </div>
-    <div class="card-body">
-      <div class="code-wrap">
-        <button class="copy-btn" id="copyBtn" onclick="copyCode()">Copy</button>
-        <pre id="srcDisplay"></pre>
-      </div>
-    </div>
-  </div>
-
   <!-- ── Python Implementation ── -->
-  <div class="card">
+  <div class="card" id="python-section">
     <div class="card-hdr">
       <span class="card-title">🐍 Python Implementation</span>
       <div class="src-meta">
@@ -942,63 +916,6 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && document.activeElement.tagName === 'INPUT') doSort();
   });
-
-  // ═══════════════════════════════════════════════════════════════
-  // Source Code Display
-  // ═══════════════════════════════════════════════════════════════
-
-  const SRC_PLAIN = `/**
- * Routes a package to the appropriate dispatch stack based on its
- * physical properties.
- *
- * @param {number} width  - Package width in centimeters
- * @param {number} height - Package height in centimeters
- * @param {number} length - Package length in centimeters
- * @param {number} mass   - Package mass in kilograms
- * @returns {"STANDARD"|"SPECIAL"|"REJECTED"} The name of the dispatch stack
- */
-function sort(width, height, length, mass) {
-  const volume  = width * height * length;
-  const isBulky = volume >= 1_000_000 || width >= 150 || height >= 150 || length >= 150;
-  const isHeavy = mass >= 20;
-
-  if (isBulky && isHeavy) return 'REJECTED';
-  if (isBulky || isHeavy) return 'SPECIAL';
-  return 'STANDARD';
-}`;
-
-  const SRC_HTML = `<span class="cm">/**
- * Routes a package to the appropriate dispatch stack based on its
- * physical properties.
- *
- * @param {number} width  - Package width in centimeters
- * @param {number} height - Package height in centimeters
- * @param {number} length - Package length in centimeters
- * @param {number} mass   - Package mass in kilograms
- * @returns {"STANDARD"|"SPECIAL"|"REJECTED"} The name of the dispatch stack
- */</span>
-<span class="kw">function</span> <span class="fn">sort</span><span class="pn">(</span>width<span class="pn">,</span> height<span class="pn">,</span> length<span class="pn">,</span> mass<span class="pn">) {</span>
-  <span class="kw">const</span> volume  <span class="op">=</span> width <span class="op">*</span> height <span class="op">*</span> length<span class="pn">;</span>
-  <span class="kw">const</span> isBulky <span class="op">=</span> volume <span class="op">>=</span> <span class="nm">1_000_000</span>
-    <span class="op">||</span> width  <span class="op">>=</span> <span class="nm">150</span>
-    <span class="op">||</span> height <span class="op">>=</span> <span class="nm">150</span>
-    <span class="op">||</span> length <span class="op">>=</span> <span class="nm">150</span><span class="pn">;</span>
-  <span class="kw">const</span> isHeavy <span class="op">=</span> mass <span class="op">>=</span> <span class="nm">20</span><span class="pn">;</span>
-
-  <span class="kw">if</span> <span class="pn">(</span>isBulky <span class="op">&&</span> isHeavy<span class="pn">)</span> <span class="kw">return</span> <span class="st">'REJECTED'</span><span class="pn">;</span>
-  <span class="kw">if</span> <span class="pn">(</span>isBulky <span class="op">||</span> isHeavy<span class="pn">)</span> <span class="kw">return</span> <span class="st">'SPECIAL'</span><span class="pn">;</span>
-  <span class="kw">return</span> <span class="st">'STANDARD'</span><span class="pn">;</span>
-<span class="pn">}</span>`;
-
-  document.getElementById('srcDisplay').innerHTML = SRC_HTML;
-
-  function copyCode() {
-    navigator.clipboard.writeText(SRC_PLAIN).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 2000);
-    });
-  }
 
   // ═══════════════════════════════════════════════════════════════
   // Python Implementation — source + Pyodide runner
