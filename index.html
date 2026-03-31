@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Package Router — Smarter Technologies</title>
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --dim:       #484f58;
+
+      --green:     #238636;
+      --green-hi:  #3fb950;
+      --amber:     #9e6a03;
+      --amber-hi:  #d29922;
+      --red:       #b91c1c;
+      --red-hi:    #f85149;
+      --blue:      #1f6feb;
+      --blue-hi:   #58a6ff;
+
+      --radius: 6px;
+      --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Header ────────────────────────────────── */
+    .hdr {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hdr::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 32px 32px;
+      opacity: 0.3;
+      mask-image: radial-gradient(ellipse 80% 100% at 50% 0%, black, transparent);
+    }
+    .hdr::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 25% 60%, rgba(31,111,235,.08) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 60%, rgba(35,134,54,.06) 0%, transparent 55%);
+    }
+    .hdr-inner { position: relative; z-index: 1; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(31,111,235,.12);
+      border: 1px solid rgba(88,166,255,.25);
+      color: var(--blue-hi);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: clamp(24px, 5vw, 40px);
+      font-weight: 700;
+      letter-spacing: -.5px;
+      background: linear-gradient(135deg, var(--text) 0%, var(--muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .hdr-sub { color: var(--muted); font-size: 15px; }
+
+    /* ── Layout ────────────────────────────────── */
+    .main {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+      display: grid;
+      gap: 20px;
+    }
+
+    /* ── Card ──────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .card-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body { padding: 20px; }
+
+    /* ── Demo ──────────────────────────────────── */
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 680px) {
+      .demo-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Inputs */
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+    }
+    .field input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 16px;
+      font-family: var(--mono);
+      padding: 8px 10px;
+      width: 100%;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--blue-hi);
+      box-shadow: 0 0 0 3px rgba(88,166,255,.12);
+    }
+    .field-unit { font-size: 10px; color: var(--dim); margin-top: 2px; }
+
+    .live-info {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .live-info span { color: var(--blue-hi); }
+
+    /* Presets */
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .preset-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .preset-btn:hover { border-color: var(--blue-hi); color: var(--blue-hi); }
+
+    .sort-btn {
+      width: 100%;
+      padding: 11px;
+      background: var(--blue);
+      border: none;
+      border-radius: var(--radius);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .sort-btn:hover:not(:disabled) { background: #388bfd; }
+    .sort-btn:active:not(:disabled) { transform: scale(.98); }
+    .sort-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Result */
+    .result-pill {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 14px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .25s, transform .25s;
+    }
+    .result-pill.show { opacity: 1; transform: translateY(0); }
+    .result-pill.STANDARD { background: rgba(63,185,80,.12); border: 1px solid var(--green-hi); color: var(--green-hi); }
+    .result-pill.SPECIAL  { background: rgba(210,153,34,.12); border: 1px solid var(--amber-hi); color: var(--amber-hi); }
+    .result-pill.REJECTED { background: rgba(248,81,73,.12);  border: 1px solid var(--red-hi);   color: var(--red-hi);   }
+
+    /* Visualization */
+    .viz { display: flex; flex-direction: column; gap: 14px; }
+
+    .conveyor-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .conveyor-lbl { font-size: 10px; color: var(--dim); font-family: var(--mono); white-space: nowrap; }
+    .conveyor {
+      flex: 1;
+      height: 34px;
+      border-radius: 4px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+    }
+    .belt {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0, transparent 14px,
+        rgba(255,255,255,.04) 14px, rgba(255,255,255,.04) 20px
+      );
+      animation: roll .6s linear infinite;
+    }
+    @keyframes roll {
+      from { background-position: 0 0; }
+      to   { background-position: 20px 0; }
+    }
+
+    /* Bins */
+    .bins {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .bin {
+      border-radius: var(--radius);
+      border: 2px solid;
+      padding: 14px 8px 12px;
+      text-align: center;
+      transition: border-color .25s, background .25s, box-shadow .25s;
+      cursor: default;
+    }
+    .bin-STANDARD { border-color: var(--green);  background: rgba(35,134,54,.05); }
+    .bin-SPECIAL  { border-color: var(--amber);  background: rgba(158,106,3,.05); }
+    .bin-REJECTED { border-color: var(--red);    background: rgba(185,28,28,.05); }
+
+    .bin-STANDARD.pulse { border-color: var(--green-hi); background: rgba(63,185,80,.14); box-shadow: 0 0 22px rgba(63,185,80,.2); }
+    .bin-SPECIAL.pulse  { border-color: var(--amber-hi); background: rgba(210,153,34,.14); box-shadow: 0 0 22px rgba(210,153,34,.2); }
+    .bin-REJECTED.pulse { border-color: var(--red-hi);   background: rgba(248,81,73,.14);  box-shadow: 0 0 22px rgba(248,81,73,.2); }
+
+    .bin-icon { font-size: 20px; margin-bottom: 6px; display: block; }
+    .bin-name {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .bin-STANDARD .bin-name { color: var(--green-hi); }
+    .bin-SPECIAL  .bin-name { color: var(--amber-hi); }
+    .bin-REJECTED .bin-name { color: var(--red-hi);   }
+    .bin-count {
+      font-size: 26px;
+      font-weight: 700;
+      font-family: var(--mono);
+      transition: transform .15s;
+    }
+    .bin-STANDARD .bin-count { color: var(--green-hi); }
+    .bin-SPECIAL  .bin-count { color: var(--amber-hi); }
+    .bin-REJECTED .bin-count { color: var(--red-hi);   }
+    .bin-count.bump { transform: scale(1.3); }
+
+    /* Flying package */
+    .fly {
+      position: fixed;
+      font-size: 22px;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── Logic Table ───────────────────────────── */
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .tbl th, .tbl td {
+      padding: 9px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl th {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      background: var(--surface2);
+    }
+    .tbl td:first-child { color: var(--muted); }
+
+    /* ── Tests ─────────────────────────────────── */
+    .test-summary { display: flex; align-items: center; gap: 8px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pill-pass { background: rgba(63,185,80,.12); color: var(--green-hi); border: 1px solid rgba(63,185,80,.3); }
+    .pill-fail { background: rgba(248,81,73,.12);  color: var(--red-hi);   border: 1px solid rgba(248,81,73,.3); }
+
+    .test-list { list-style: none; }
+    .test-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .test-item:last-child { border-bottom: none; }
+    .test-item:hover { background: rgba(255,255,255,.02); }
+
+    .t-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .t-body { flex: 1; min-width: 0; }
+    .t-label { font-size: 13px; color: var(--text); }
+    .t-detail {
+      font-size: 11px;
+      color: var(--dim);
+      font-family: var(--mono);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .t-chip {
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .t-chip.STANDARD { background: rgba(63,185,80,.12);  color: var(--green-hi); }
+    .t-chip.SPECIAL  { background: rgba(210,153,34,.12); color: var(--amber-hi); }
+    .t-chip.REJECTED { background: rgba(248,81,73,.12);  color: var(--red-hi);   }
+
+    /* Group headers in test list */
+    .test-group {
+      padding: 8px 20px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--dim);
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Source ────────────────────────────────── */
+    .src-meta {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .meta-lbl { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
+    .meta-val { font-family: var(--mono); font-size: 13px; color: var(--blue-hi); }
+
+    .code-wrap {
+      background: var(--bg);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: auto;
+    }
+    .code-wrap pre {
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.75;
+      margin: 0;
+      tab-size: 2;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .copy-btn:hover { border-color: var(--blue-hi); color: var(--blue-hi); }
+
+    /* Syntax */
+    .kw { color: #ff7b72; }
+    .fn { color: #d2a8ff; }
+    .cm { color: #8b949e; font-style: italic; }
+    .st { color: #a5d6ff; }
+    .nm { color: #79c0ff; }
+    .op { color: #ff7b72; }
+    .pn { color: #e6edf3; }
+
+    /* ── Footer ────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="badge">⚙ Robotic Dispatch System</div>
+    <h1>Package Router</h1>
+    <p class="hdr-sub">Smarter Technologies — Automation Factory</p>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ── Interactive Demo ── -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">🎮 Interactive Demo</span>
+      <span style="font-size:12px;color:var(--muted)">Enter dimensions &amp; mass, then route the package</span>
+    </div>
+    <div class="card-body">
+      <div class="demo-grid">
+
+        <!-- Controls -->
+        <div>
+          <div class="inputs-grid">
+            <div class="field">
+              <label>Width</label>
+              <input type="number" id="iw" value="10" min="0" step="1">
+              <span class="field-unit">centimeters</span>
+            </div>
+            <div class="field">
+              <label>Height</label>
+              <input type="number" id="ih" value="10" min="0" step="1">
+              <span class="field-unit">centimeters</span>
+            </div>
+            <div class="field">
+              <label>Length</label>
+              <input type="number" id="il" value="10" min="0" step="1">
+              <span class="field-unit">centimeters</span>
+            </div>
+            <div class="field">
+              <label>Mass</label>
+              <input type="number" id="im" value="5" min="0" step="1">
+              <span class="field-unit">kilograms</span>
+            </div>
+          </div>
+
+          <div class="live-info">
+            Volume: <span id="volDisp">1,000</span> cm³
+            &nbsp;·&nbsp;
+            Bulky: <span id="bulkyDisp">No</span>
+            &nbsp;·&nbsp;
+            Heavy: <span id="heavyDisp">No</span>
+          </div>
+
+          <div class="presets">
+            <button class="preset-btn" onclick="preset(10,10,10,5)">📦 Standard</button>
+            <button class="preset-btn" onclick="preset(10,10,10,25)">⚖️ Heavy only</button>
+            <button class="preset-btn" onclick="preset(100,100,100,5)">📐 Bulky (vol)</button>
+            <button class="preset-btn" onclick="preset(150,1,1,5)">📏 Bulky (dim)</button>
+            <button class="preset-btn" onclick="preset(100,100,100,25)">🚫 Rejected</button>
+          </div>
+
+          <button class="sort-btn" id="sortBtn" onclick="doSort()">
+            Route Package →
+          </button>
+
+          <div class="result-pill" id="resultPill"></div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="viz">
+          <div class="conveyor-row">
+            <span class="conveyor-lbl">INPUT</span>
+            <div class="conveyor" id="conveyorEl">
+              <div class="belt"></div>
+            </div>
+            <span class="conveyor-lbl">SORT</span>
+          </div>
+
+          <div class="bins">
+            <div class="bin bin-STANDARD" id="bin-STANDARD">
+              <span class="bin-icon">📦</span>
+              <div class="bin-name">Standard</div>
+              <div class="bin-count" id="cnt-STANDARD">0</div>
+            </div>
+            <div class="bin bin-SPECIAL" id="bin-SPECIAL">
+              <span class="bin-icon">⚠️</span>
+              <div class="bin-name">Special</div>
+              <div class="bin-count" id="cnt-SPECIAL">0</div>
+            </div>
+            <div class="bin bin-REJECTED" id="bin-REJECTED">
+              <span class="bin-icon">🚫</span>
+              <div class="bin-name">Rejected</div>
+              <div class="bin-count" id="cnt-REJECTED">0</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Routing Logic ── -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">📋 Routing Logic</span>
+    </div>
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Condition</th>
+          <th>Bulky?</th>
+          <th>Heavy?</th>
+          <th>Stack</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Neither bulky nor heavy</td>
+          <td>✗</td>
+          <td>✗</td>
+          <td><span class="t-chip STANDARD">STANDARD</span></td>
+        </tr>
+        <tr>
+          <td>Volume ≥ 1,000,000 cm³ or any dimension ≥ 150 cm; mass &lt; 20 kg</td>
+          <td>✓</td>
+          <td>✗</td>
+          <td><span class="t-chip SPECIAL">SPECIAL</span></td>
+        </tr>
+        <tr>
+          <td>Mass ≥ 20 kg; volume &lt; 1,000,000 cm³ and all dimensions &lt; 150 cm</td>
+          <td>✗</td>
+          <td>✓</td>
+          <td><span class="t-chip SPECIAL">SPECIAL</span></td>
+        </tr>
+        <tr>
+          <td>Both bulky and heavy</td>
+          <td>✓</td>
+          <td>✓</td>
+          <td><span class="t-chip REJECTED">REJECTED</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Test Suite ── -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">🧪 Test Suite</span>
+      <div class="test-summary">
+        <span id="testPill" class="pill pill-pass">Running…</span>
+      </div>
+    </div>
+    <ul class="test-list" id="testList"></ul>
+  </div>
+
+  <!-- ── Source Code ── -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="card-title">{ } Source Code</span>
+      <div class="src-meta">
+        <div class="meta-item">
+          <span class="meta-lbl">Time</span>
+          <span class="meta-val">O(1)</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl">Space</span>
+          <span class="meta-val">O(1)</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl">Language</span>
+          <span class="meta-val">JavaScript</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="code-wrap">
+        <button class="copy-btn" id="copyBtn" onclick="copyCode()">Copy</button>
+        <pre id="srcDisplay"></pre>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Built for Smarter Technologies · Staff Software Engineer, Developer Experience
+</footer>
+
+<script>
+  // ═══════════════════════════════════════════════════════════════
+  // Core Logic
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Routes a package to the appropriate dispatch stack based on its
+   * physical properties.
+   *
+   * @param {number} width  - Package width in centimeters
+   * @param {number} height - Package height in centimeters
+   * @param {number} length - Package length in centimeters
+   * @param {number} mass   - Package mass in kilograms
+   * @returns {"STANDARD"|"SPECIAL"|"REJECTED"} The name of the dispatch stack
+   */
+  function sort(width, height, length, mass) {
+    const volume  = width * height * length;
+    const isBulky = volume >= 1_000_000 || width >= 150 || height >= 150 || length >= 150;
+    const isHeavy = mass >= 20;
+
+    if (isBulky && isHeavy) return 'REJECTED';
+    if (isBulky || isHeavy) return 'SPECIAL';
+    return 'STANDARD';
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Test Cases
+  // ═══════════════════════════════════════════════════════════════
+
+  const TESTS = [
+    // ── STANDARD ─────────────────────────────────────────────────
+    { group: 'STANDARD — not bulky, not heavy' },
+    { w:   1, h:   1, l:   1, m:  1, x: 'STANDARD', d: 'Minimum values (vol=1, mass=1)' },
+    { w:  10, h:  10, l:  10, m:  5, x: 'STANDARD', d: 'Typical small package' },
+    { w:  99, h: 100, l: 100, m: 19, x: 'STANDARD', d: 'Volume just under threshold (990,000 cm³), mass just under threshold (19 kg)' },
+    { w: 149, h:   1, l:   1, m:  1, x: 'STANDARD', d: 'Longest dimension at 149 cm (one under limit)' },
+
+    // ── SPECIAL: bulky by volume ──────────────────────────────────
+    { group: 'SPECIAL — bulky by volume' },
+    { w: 100, h: 100, l: 100, m:  1, x: 'SPECIAL',  d: 'Volume exactly at threshold (1,000,000 cm³)' },
+    { w: 200, h: 100, l: 100, m:  1, x: 'SPECIAL',  d: 'Volume above threshold (2,000,000 cm³)' },
+
+    // ── SPECIAL: bulky by dimension ───────────────────────────────
+    { group: 'SPECIAL — bulky by single dimension ≥ 150 cm' },
+    { w: 150, h:   1, l:   1, m:  1, x: 'SPECIAL',  d: 'Width exactly 150 cm' },
+    { w:   1, h: 150, l:   1, m:  1, x: 'SPECIAL',  d: 'Height exactly 150 cm' },
+    { w:   1, h:   1, l: 150, m:  1, x: 'SPECIAL',  d: 'Length exactly 150 cm' },
+    { w: 200, h: 200, l: 200, m:  1, x: 'SPECIAL',  d: 'All dimensions above 150 cm' },
+
+    // ── SPECIAL: heavy only ───────────────────────────────────────
+    { group: 'SPECIAL — heavy only (mass ≥ 20 kg)' },
+    { w:  10, h:  10, l:  10, m: 20, x: 'SPECIAL',  d: 'Mass exactly at threshold (20 kg)' },
+    { w:  10, h:  10, l:  10, m: 50, x: 'SPECIAL',  d: 'Very heavy, compact size' },
+
+    // ── REJECTED: both ────────────────────────────────────────────
+    { group: 'REJECTED — both bulky and heavy' },
+    { w: 100, h: 100, l: 100, m: 20, x: 'REJECTED', d: 'Bulky by volume (1M cm³) and heavy (20 kg) — both at threshold' },
+    { w: 150, h:   1, l:   1, m: 20, x: 'REJECTED', d: 'Bulky by dimension (150 cm) and heavy' },
+    { w: 200, h: 200, l: 200, m: 50, x: 'REJECTED', d: 'Very bulky and very heavy' },
+  ];
+
+  // ═══════════════════════════════════════════════════════════════
+  // Render Test Suite
+  // ═══════════════════════════════════════════════════════════════
+
+  function renderTests() {
+    const list = document.getElementById('testList');
+    let passed = 0, total = 0;
+    let html = '';
+
+    TESTS.forEach(tc => {
+      if (tc.group !== undefined) {
+        html += `<li class="test-group">${tc.group}</li>`;
+        return;
+      }
+      const actual = sort(tc.w, tc.h, tc.l, tc.m);
+      const ok = actual === tc.x;
+      if (ok) passed++;
+      total++;
+      html += `
+        <li class="test-item">
+          <span class="t-icon">${ok ? '✅' : '❌'}</span>
+          <div class="t-body">
+            <div class="t-label">${tc.d}</div>
+            <div class="t-detail">sort(${tc.w}, ${tc.h}, ${tc.l}, ${tc.m}) → ${actual}${!ok ? ` · expected: ${tc.x}` : ''}</div>
+          </div>
+          <span class="t-chip ${actual}">${actual}</span>
+        </li>`;
+    });
+
+    list.innerHTML = html;
+    const pill = document.getElementById('testPill');
+    pill.textContent = `✓ ${passed}/${total} passing`;
+    pill.className   = `pill ${passed === total ? 'pill-pass' : 'pill-fail'}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Live Info
+  // ═══════════════════════════════════════════════════════════════
+
+  function updateLive() {
+    const w = val('iw'), h = val('ih'), l = val('il'), m = val('im');
+    const vol     = w * h * l;
+    const isBulky = vol >= 1_000_000 || w >= 150 || h >= 150 || l >= 150;
+    const isHeavy = m >= 20;
+    document.getElementById('volDisp').textContent   = vol.toLocaleString();
+    document.getElementById('bulkyDisp').textContent = isBulky ? 'Yes' : 'No';
+    document.getElementById('heavyDisp').textContent = isHeavy ? 'Yes' : 'No';
+    document.getElementById('bulkyDisp').style.color = isBulky ? 'var(--amber-hi)' : 'var(--muted)';
+    document.getElementById('heavyDisp').style.color = isHeavy ? 'var(--red-hi)'   : 'var(--muted)';
+  }
+
+  function val(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+  ['iw','ih','il','im'].forEach(id =>
+    document.getElementById(id).addEventListener('input', updateLive)
+  );
+
+  // ═══════════════════════════════════════════════════════════════
+  // Presets
+  // ═══════════════════════════════════════════════════════════════
+
+  function preset(w, h, l, m) {
+    document.getElementById('iw').value = w;
+    document.getElementById('ih').value = h;
+    document.getElementById('il').value = l;
+    document.getElementById('im').value = m;
+    updateLive();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Sort + Animation
+  // ═══════════════════════════════════════════════════════════════
+
+  const counts = { STANDARD: 0, SPECIAL: 0, REJECTED: 0 };
+  let busy = false;
+
+  function doSort() {
+    if (busy) return;
+    const w = val('iw'), h = val('ih'), l = val('il'), m = val('im');
+    const stack = sort(w, h, l, m);
+    flyToBin(stack, () => {
+      counts[stack]++;
+      const cntEl = document.getElementById(`cnt-${stack}`);
+      cntEl.textContent = counts[stack];
+      cntEl.classList.add('bump');
+      setTimeout(() => cntEl.classList.remove('bump'), 200);
+
+      const labels = {
+        STANDARD: '✅  STANDARD — Routed to standard handling',
+        SPECIAL:  '⚠️  SPECIAL — Requires manual handling',
+        REJECTED: '🚫  REJECTED — Package cannot be processed',
+      };
+      const pill = document.getElementById('resultPill');
+      pill.textContent = labels[stack];
+      pill.className   = `result-pill ${stack} show`;
+    });
+  }
+
+  function flyToBin(stack, done) {
+    busy = true;
+    document.getElementById('sortBtn').disabled = true;
+
+    const cEl = document.getElementById('conveyorEl');
+    const bEl = document.getElementById(`bin-${stack}`);
+    const cr  = cEl.getBoundingClientRect();
+    const br  = bEl.getBoundingClientRect();
+
+    const sx = cr.left + cr.width  / 2 - 11;
+    const sy = cr.top  + cr.height / 2 - 11;
+    const ex = br.left + br.width  / 2 - 11;
+    const ey = br.top  + br.height / 2 - 11;
+
+    const pkg = document.createElement('div');
+    pkg.className   = 'fly';
+    pkg.textContent = '📦';
+    pkg.style.left  = sx + 'px';
+    pkg.style.top   = sy + 'px';
+    document.body.appendChild(pkg);
+
+    const dx = ex - sx;
+    const dy = ey - sy;
+    const arc = Math.min(sy, ey) - 60 - sy;  // arc peak above both points
+
+    pkg.animate([
+      { transform: 'translate(0,0) scale(1)',                              opacity: 1,   offset: 0   },
+      { transform: `translate(${dx*.5}px, ${arc}px) scale(1.2)`,          opacity: 1,   offset: 0.4 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.5)`,              opacity: 0.8, offset: 0.85},
+      { transform: `translate(${dx}px, ${dy}px) scale(0)`,                opacity: 0,   offset: 1   },
+    ], { duration: 750, easing: 'ease-in-out', fill: 'forwards' })
+      .finished.then(() => {
+        pkg.remove();
+        const bin = document.getElementById(`bin-${stack}`);
+        bin.classList.add('pulse');
+        setTimeout(() => bin.classList.remove('pulse'), 500);
+        done();
+        busy = false;
+        document.getElementById('sortBtn').disabled = false;
+      });
+  }
+
+  // Enter key shortcut
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.activeElement.tagName === 'INPUT') doSort();
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // Source Code Display
+  // ═══════════════════════════════════════════════════════════════
+
+  const SRC_PLAIN = `/**
+ * Routes a package to the appropriate dispatch stack based on its
+ * physical properties.
+ *
+ * @param {number} width  - Package width in centimeters
+ * @param {number} height - Package height in centimeters
+ * @param {number} length - Package length in centimeters
+ * @param {number} mass   - Package mass in kilograms
+ * @returns {"STANDARD"|"SPECIAL"|"REJECTED"} The name of the dispatch stack
+ */
+function sort(width, height, length, mass) {
+  const volume  = width * height * length;
+  const isBulky = volume >= 1_000_000 || width >= 150 || height >= 150 || length >= 150;
+  const isHeavy = mass >= 20;
+
+  if (isBulky && isHeavy) return 'REJECTED';
+  if (isBulky || isHeavy) return 'SPECIAL';
+  return 'STANDARD';
+}`;
+
+  const SRC_HTML = `<span class="cm">/**
+ * Routes a package to the appropriate dispatch stack based on its
+ * physical properties.
+ *
+ * @param {number} width  - Package width in centimeters
+ * @param {number} height - Package height in centimeters
+ * @param {number} length - Package length in centimeters
+ * @param {number} mass   - Package mass in kilograms
+ * @returns {"STANDARD"|"SPECIAL"|"REJECTED"} The name of the dispatch stack
+ */</span>
+<span class="kw">function</span> <span class="fn">sort</span><span class="pn">(</span>width<span class="pn">,</span> height<span class="pn">,</span> length<span class="pn">,</span> mass<span class="pn">) {</span>
+  <span class="kw">const</span> volume  <span class="op">=</span> width <span class="op">*</span> height <span class="op">*</span> length<span class="pn">;</span>
+  <span class="kw">const</span> isBulky <span class="op">=</span> volume <span class="op">>=</span> <span class="nm">1_000_000</span>
+    <span class="op">||</span> width  <span class="op">>=</span> <span class="nm">150</span>
+    <span class="op">||</span> height <span class="op">>=</span> <span class="nm">150</span>
+    <span class="op">||</span> length <span class="op">>=</span> <span class="nm">150</span><span class="pn">;</span>
+  <span class="kw">const</span> isHeavy <span class="op">=</span> mass <span class="op">>=</span> <span class="nm">20</span><span class="pn">;</span>
+
+  <span class="kw">if</span> <span class="pn">(</span>isBulky <span class="op">&&</span> isHeavy<span class="pn">)</span> <span class="kw">return</span> <span class="st">'REJECTED'</span><span class="pn">;</span>
+  <span class="kw">if</span> <span class="pn">(</span>isBulky <span class="op">||</span> isHeavy<span class="pn">)</span> <span class="kw">return</span> <span class="st">'SPECIAL'</span><span class="pn">;</span>
+  <span class="kw">return</span> <span class="st">'STANDARD'</span><span class="pn">;</span>
+<span class="pn">}</span>`;
+
+  document.getElementById('srcDisplay').innerHTML = SRC_HTML;
+
+  function copyCode() {
+    navigator.clipboard.writeText(SRC_PLAIN).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Init
+  // ═══════════════════════════════════════════════════════════════
+
+  updateLive();
+  renderTests();
+</script>
+
+</body>
+</html>
