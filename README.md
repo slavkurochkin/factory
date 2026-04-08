@@ -2,7 +2,6 @@
 
 Interactive demo for the robotic arm package dispatch system.
 
-**Live demo:** https://&lt;your-username&gt;.github.io/&lt;repo-name&gt;
 
 ## The Task
 
